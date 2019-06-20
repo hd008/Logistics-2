@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+         http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+         http://www.springframework.org/schema/context
+         http://www.springframework.org/schema/context/spring-context-3.0.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <!-- 基本信息 -->
+        <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/logistics"/>
+        <property name="driverClass" value="com.mysql.jdbc.Driver"/>
+        <property name="user" value="root"/>
+        <property name="password" value="huangdi"/>
+        <!-- 其他配置 -->
+        <!--初始化时获取三个连接，取值应在minPoolSize与maxPoolSize之间。Default: 3 -->
+        <property name="initialPoolSize" value="3"/>
+        <!--连接池中保留的最小连接数。Default: 3 -->
+        <property name="minPoolSize" value="3"/>
+        <!--连接池中保留的最大连接数。Default: 15 -->
+        <property name="maxPoolSize" value="5"/>
+        <!--当连接池中的连接耗尽的时候c3p0一次同时获取的连接数。Default: 3 -->
+        <property name="acquireIncrement" value="3"/>
+        <!-- 控制数据源内加载的PreparedStatements数量。如果maxStatements与maxStatementsPerConnection均为0，则缓存被关闭。Default: 0 -->
+        <property name="maxStatements" value="8"/>
+        <!-- maxStatementsPerConnection定义了连接池内单个连接所拥有的最大缓存statements数。Default: 0 -->
+        <property name="maxStatementsPerConnection" value="5"/>
+        <!--最大空闲时间,1800秒内未使用则连接被丢弃。若为0则永不丢弃。Default: 0 -->
+        <property name="maxIdleTime" value="1800"/>
+    </bean>
+
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+          <!--依赖注入数据源，注入正是上文定义的dataSource-->
+        <property name="dataSource" ref="dataSource"/>
+                <!--  mappingResouces属性用来列出全部映射文件-->
+        <property name="mappingResources">
+             <list>
+                 <!--以下用来列出所有的PO映射文件-->
+                 <value>com/logistics/entity/User.hbm.xml</value>
+                 <value>com/logistics/entity/Order.hbm.xml</value>
+                 <value>com/logistics/entity/Record.hbm.xml</value>
+            </list>
+        </property>
+        <!--定义Hibernate的SessionFactory的属性 -->
+        <property name="hibernateProperties">
+            <props>
+                <!--  指定Hibernate的连接方言-->
+                <prop key="hibernate.format_sql">true</prop>
+                <prop key="hibernate.show_sql">true</prop>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+                <!--  不同数据库连接，启动时选择create,update,create-drop-->
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.connection.release_mode">after_statement</prop>
+                <!--<prop key="hibernate.current_session_context_class">thread</prop>-->
+                <!--<prop key="hibernate.transaction.factory_class">org.hibernate.transaction.JDBCTransactionFactory</prop>-->
+            </props>
+        </property>
+    </bean>
+
+    <!-- 添加事务配置 -->
+    <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+
+    <!--<tx:advice id="txAdvice" transaction-manager="transactionManager" >-->
+        <!--<tx:attributes>-->
+            <!--&lt;!&ndash; 以方法为单位,指定方法应用什么事务属性-->
+                <!--isolation:隔离级别-->
+                <!--propagation:传播行为-->
+                <!--read-only:是否只读-->
+             <!--&ndash;&gt;-->
+            <!--<tx:method name="save*" isolation="REPEATABLE_READ" propagation="REQUIRED" read-only="false" />-->
+            <!--<tx:method name="persist*" isolation="REPEATABLE_READ" propagation="REQUIRED" read-only="false" />-->
+            <!--<tx:method name="update*" isolation="REPEATABLE_READ" propagation="REQUIRED" read-only="false" />-->
+            <!--<tx:method name="modify*" isolation="REPEATABLE_READ" propagation="REQUIRED" read-only="false" />-->
+            <!--<tx:method name="delete*" isolation="REPEATABLE_READ" propagation="REQUIRED" read-only="false" />-->
+            <!--<tx:method name="remove*" isolation="REPEATABLE_READ" propagation="REQUIRED" read-only="false" />-->
+            <!--<tx:method name="get*" isolation="REPEATABLE_READ" propagation="REQUIRED" read-only="true" />-->
+            <!--<tx:method name="query*" isolation="REPEATABLE_READ" propagation="REQUIRED" read-only="true" />-->
+            <!--<tx:method name="find*" isolation="REPEATABLE_READ" propagation="REQUIRED" read-only="true" />-->
+            <!--<tx:method name="*" isolation="REPEATABLE_READ" propagation="REQUIRED" read-only="false"/>-->
+        <!--</tx:attributes>-->
+    <!--</tx:advice>-->
+    <!--&lt;!&ndash; 配置织入 &ndash;&gt;-->
+    <!--<aop:config>-->
+        <!--&lt;!&ndash; 配置切点表达式 &ndash;&gt;-->
+        <!--<aop:pointcut expression="execution(* com.logistics.dao.*Dao.*.*(..))" id="txPc"/>-->
+        <!--&lt;!&ndash; 配置切面 : 通知+切点-->
+                 <!--advice-ref:通知的名称-->
+                 <!--pointcut-ref:切点的名称-->
+         <!--&ndash;&gt;-->
+        <!--<aop:advisor advice-ref="txAdvice" pointcut-ref="txPc" />-->
+    <!--</aop:config>-->
+
+    <!--<tx:annotation-driven transaction-manager="transactionManager"/>-->
+
+    <!--  配置Person持久化类的DAO bean-->
+    <bean id="userDao" class="com.logistics.dao.UserDao">
+        <!--  采用依赖注入来传入SessionFactory的引用-->
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+    <bean id="userService" class="com.logistics.service.Impl.UserServiceImpl">
+        <property name="userDao" ref="userDao"/>
+    </bean>
+
+    <bean id="testAction" class="com.logistics.action.UserAction" scope="prototype">
+        <property name="userService" ref="userService"/>
+    </bean>
+
+    <bean id="manageUserAction" class="com.logistics.action.ManageUserAction" scope="prototype">
+        <property name="userService" ref="userService"/>
+    </bean>
+
+    <bean name="recordDao" class="com.logistics.dao.RecordDao">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <bean id="redordService" class="com.logistics.service.Impl.RecordServiceImpl">
+        <property name="recordDao" ref="recordDao"/>
+    </bean>
+
+    <bean id="recordAction" class="com.logistics.action.RecordAction">
+        <property name="orderService" ref="orderService"/>
+        <property name="userService" ref="userService"/>
+        <property name="recordService" ref="redordService"/>
+    </bean>
+
+    <bean name="orderDao" class="com.logistics.dao.OrderDao">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <bean id="orderService" class="com.logistics.service.Impl.OrderServiceImpl">
+        <property name="orderDao" ref="orderDao"/>
+    </bean>
+
+    <bean id="orderAction" class="com.logistics.action.OrderAction">
+        <property name="orderService" ref="orderService"/>
+    </bean>
+
+    <bean id="queryAction" class="com.logistics.action.QueryAction" scope="prototype">
+        <property name="orderService" ref="orderService"/>
+    </bean>
+
+</beans>
